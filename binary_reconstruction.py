@@ -238,6 +238,12 @@ def calculateDiffuseNormals(images):
 
     return encodedImage
 
+"""
+mixed normals encode a mixture of a diffuse normal and some specular reflectance.
+The specular reflectance can be computed by decomposing weighted sum of mixed normal and diffuse normal.
+The specular normal is then calculated as the sum of the viewing direction and the estimated reflection vector
+"""
+
 def calculateSpecularNormals(diffuse_albedo, specular_albedo, mixed_normal, diffuse_normal, viewing_direction) : 
     
     su = specular_albedo + diffuse_albedo[...,0]
