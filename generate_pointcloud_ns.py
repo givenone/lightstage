@@ -44,7 +44,6 @@ def generate_pointcloud(rgb_file, depth_file, normal_file, ply_file):
     normal = cv.imread(normal_file, -1)
     #normal = cv.cvtColor(normal, cv.COLOR_BGR2RGB)
 
-    #normal = Image.open(normal_file)
     
     if rgb.size != depth.size:
         raise Exception("Color and depth image do not have the same resolution.")
@@ -53,6 +52,9 @@ def generate_pointcloud(rgb_file, depth_file, normal_file, ply_file):
     points = []
     range_grid = []
     
+    for i in range(10) :
+        for j in range(10) :
+            print(normal[2000+i][1000+j])
     
     for u in range(height) :
         for v in range(width) :
