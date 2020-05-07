@@ -6,6 +6,10 @@
 
 ## How to use
 
+* build :
+```
+    make
+```
 * simply run :
 ```
    bash run.sh 
