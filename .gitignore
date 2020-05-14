@@ -1,5 +1,7 @@
 *.ply
 *.tif
+filtered_junwon/
+reconstruction_output/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import sys,os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-path = "C:\\Users\\yeap98\\Desktop\\lightstage\\LSMK_0508_170205\\"
+path = "C:\\Users\\yeap98\\Desktop\\lightstage\\LSMK_0508_145814\\"
 form = ".bmp"
 
 names = ["x", "x_c", "y", "y_c", "z", "z_c", "w"]
@@ -20,7 +20,7 @@ for na in names :
     fig = plt.figure()
     #ax1 = fig.add_subplot(121)  # left side
     #ax2 = fig.add_subplot(122)
-    median = cv.medianBlur(img, 11) # each channel independently.
+    median = cv.medianBlur(img, 5) # each channel independently.
 
     #rgb = cv.cvtColor(median, cv.COLOR_BGR2RGB)
     pa = dir_path + '/{}.bmp'.format(na)

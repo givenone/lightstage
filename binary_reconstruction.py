@@ -379,7 +379,6 @@ if __name__ == "__main__":
     specular_albedo = calculateSpecularAlbedo(images, imgs)
     mixed_albedo = calculateMixedAlbedo(images)
     diffuse_albedo = calculateDiffuseAlbedo(mixed_albedo, specular_albedo)
-    
     mixed_normal = calculateMixedNormals(images)
     diffuse_normal = calculateDiffuseNormals(images)
     specular_normal = calculateSpecularNormals(diffuse_albedo, specular_albedo, mixed_normal, diffuse_normal, vd)
@@ -414,6 +413,8 @@ if __name__ == "__main__":
         plt.title("specular_normal")
         plot(specular_normal)
         
+        for h in range(filtered_normal.shape[0]) :
+            normalize(filtered_normal[h], copy = False)
         plt.title("filtered_normal")
         plot(filtered_normal)
         
@@ -427,6 +428,7 @@ if __name__ == "__main__":
         diffuse = cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB)
         im = Image.fromarray(diffuse)
         im.save("reconstruction_output/diffuse_albedo" + ".png")
+        save("reconstruction_output/diffuse_normal", ".png", diffuse_normal)
         save("reconstruction_output/filtered", ".png", filtered_normal)
         save("reconstruction_output/specular_normal", ".png", specular_normal)
         save("reconstruction_output/syn", ".png", syn)
