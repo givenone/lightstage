@@ -429,6 +429,7 @@ if __name__ == "__main__":
         im.save("reconstruction_output/diffuse_albedo" + ".png")
         save("reconstruction_output/filtered", ".png", filtered_normal)
         save("reconstruction_output/specular_normal", ".png", specular_normal)
+        save("reconstruction_output/syn", ".png", syn)
         
         from tifffile import imsave
         rgb_syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
