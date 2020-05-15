@@ -317,11 +317,14 @@ def generate_viewing_direction(shape, focalLength, sensor = (0.036, 0.024)) :
             for y in range(height)]
 
     v = np.array(vd)
-    vd = v.astype('float32')
-
+    vd = v.astype('float32')    
     # Normalization
     for h in range(height) :
         normalize(vd[h], copy = False)
+
+    # ROTATION 
+    r = Rot.from_euler('y', math.atan(3/3.9)) ###### TODO :: atan(x/z) (the coordinate of camera.)
+    vd = r.apply(vd.reshape(-1,3)).reshape((height,width,3))
 
     print("Viewing Direction Done")
     return vd
