@@ -1,5 +1,6 @@
 *.ply
 *.tif
+*.png
 filtered_junwon/
 reconstruction_output/
 # Byte-compiled / optimized / DLL files
