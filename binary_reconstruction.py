@@ -79,11 +79,11 @@ def calculateDiffuseAlbedo(mixed, specular) :
     out_img[...,2] = np.subtract(mixed[...,2], specular)
     out_img /= 2
     out_img = np.clip(out_img, 0, 255)
-    #median = cv.medianBlur(out_img, 5) # each channel independently.
+    median = cv.medianBlur(out_img, 5) # each channel independently.
     #blur = cv.bilateralFilter(out_img,9,75,75)
     print("Diffuse Albedo Done")
 
-    return out_img # BGR
+    return median# BGR
 
 
 """ 
@@ -152,12 +152,13 @@ def calculateSpecularAlbedo(images, imgs) :
     max_val = np.max(specular_max)
 
     specular_max = (specular_max - min_val) / (max_val - min_val) * 255.0 # 255 is too bright
-    #specular_max = np.clip(specular_max, 0, 255)
+    specular_max = np.clip(specular_max, 0, 255)
     print("Specular Albedo Done")  
     
     plt.title("specular_albedo")
+    median = cv.medianBlur(specular_max, 5)
     #median = cv.bilateralFilter(specular_max,9,75,75) # each channel independently.
-    return specular_max
+    return median
 
 """
 The binary spherical gradients and their complements can be directly 
@@ -282,9 +283,9 @@ def HPF(normal) : # High Pass Filtering for specular normal reconstruction
     height, width, _ = normal.shape
     
     blur = np.zeros_like(normal)
-    blur[..., 0] = gaussian_filter(normal[..., 0], sigma=7)
-    blur[..., 1] = gaussian_filter(normal[..., 1], sigma=7)
-    blur[..., 2] = gaussian_filter(normal[..., 2], sigma=7)
+    blur[..., 0] = gaussian_filter(normal[..., 0], sigma=55)
+    blur[..., 1] = gaussian_filter(normal[..., 1], sigma=55)
+    blur[..., 2] = gaussian_filter(normal[..., 2], sigma=55)
     filtered_normal = cv.subtract(normal, blur)
 
     for h in range(filtered_normal.shape[0]) :
