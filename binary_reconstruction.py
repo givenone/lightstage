@@ -79,9 +79,11 @@ def calculateDiffuseAlbedo(mixed, specular) :
     out_img[...,2] = np.subtract(mixed[...,2], specular)
     
     out_img = np.clip(out_img, 0, 255)
+    median = cv.medianBlur(out_img, 5) # each channel independently.
+    #blur = cv.bilateralFilter(out_img,9,75,75)
     print("Diffuse Albedo Done")
 
-    return out_img # BGR
+    return median #out_img # BGR
 
 
 """ 
@@ -131,8 +133,11 @@ def calculateSpecularAlbedo(images, imgs) :
 
         t = np.divide(c_g, s_c, out=np.zeros_like(c_g), where=s_c!=0)
         spec = np.subtract(v_g, t*128) 
+        spec = np.clip(spec, 0, 255)
+
         t = np.divide(c_c, s_g, out=np.zeros_like(c_c), where=s_g!=0)
         spec_c = np.subtract(v_c, t*128) 
+        spec_c = np.clip(spec_c, 0, 255)
 
         mask = v_g > v_c
         # need to mask out error (when saturation is bigger in bright side)
@@ -147,12 +152,12 @@ def calculateSpecularAlbedo(images, imgs) :
     max_val = np.max(specular_max)
 
     specular_max = (specular_max - min_val) / (max_val - min_val) * 128.0 # 255 is too bright
-    
+    specular_max = np.clip(specular_max, 0, 255)
     print("Specular Albedo Done")  
     
     plt.title("specular_albedo")
-   
-    return specular_max
+    median = cv.medianBlur(specular_max, 5) # each channel independently.
+    return median
 
 """
 The binary spherical gradients and their complements can be directly 
@@ -431,20 +436,29 @@ if __name__ == "__main__":
     save_flag = True
 
     if save_flag :
+        
+        dirname = os.path.join(os.path.abspath(os.path.dirname(__file__)) + "/" + path, 'result')
+        #print(dirname)
+        if not os.path.exists(dirname):
+            #print(dirname)
+            os.makedirs(dirname)
 
         diffuse = cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB)
         im = Image.fromarray(diffuse)
-        im.save(path+"diffuse_albedo" + ".png")
-        save(path+"diffuse_normal", ".png", diffuse_normal)
-        save(path+"filtered", ".png", filtered_normal)
-        save(path+"specular_normal", ".png", specular_normal)
-        save(path+"syn", ".png", syn)
+        im.save(path+"result/diffuse_albedo.png")
+        im = Image.fromarray(specular_albedo.astype('uint8'))
+        im.save(path+"result/specular_albedo.png")
+        save(path+"result/mixed_normal", ".png", mixed_normal)
+        save(path+"result/diffuse_normal", ".png", diffuse_normal)
+        save(path+"result/filtered", ".png", filtered_normal)
+        save(path+"result/specular_normal", ".png", specular_normal)
+        save(path+"result/syn", ".png", syn)
         
         from tifffile import imsave
         rgb_syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
         rgb_specular = cv.cvtColor(specular_normal, cv.COLOR_BGR2RGB)
-        imsave(path+'syn.tif', rgb_syn)
-        imsave(path+'specular.tif', rgb_specular)
+        #imsave(path+'syn.tif', rgb_syn)
+        #imsave(path+'specular.tif', rgb_specular)
         #save("syn", ".png", syn)
 
     # python binary_reconstruction.py [-V] [-format png] [-path ./input_image]
