@@ -78,6 +78,7 @@ def calculateDiffuseAlbedo(mixed, specular) :
     out_img[...,1] = np.subtract(mixed[...,1], specular)
     out_img[...,2] = np.subtract(mixed[...,2], specular)
     
+    out_img = np.clip(out_img, 0, 255)
     print("Diffuse Albedo Done")
 
     return out_img # BGR
@@ -362,8 +363,10 @@ if __name__ == "__main__":
     config.read('./recon.conf')
     config = config['MAIN']
     focal_length = float(config['focal_length'])
-    sensor = (float(config['sensor_width']), float(config['sensor_height']))
-
+    
+    # sensor = (float(config['sensor_width']), float(config['sensor_height'])) 
+    sensor = (float(config['sensor_height']), float(config['sensor_width'])) # Capture image is rotated.
+    
     names = ["x", "x_c", "y", "y_c", "z", "z_c"]
     names = [path + name + form for name in names]
     
@@ -394,7 +397,6 @@ if __name__ == "__main__":
     
     if view_flag :
         
-     
         plt.title("mixed_albedo")
         rgb_img = cv.cvtColor((mixed_albedo/2).astype('uint8'), cv.COLOR_BGR2RGB)
         plt.imshow(rgb_img)
@@ -440,7 +442,9 @@ if __name__ == "__main__":
         
         from tifffile import imsave
         rgb_syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
+        rgb_specular = cv.cvtColor(specular_normal, cv.COLOR_BGR2RGB)
         imsave(path+'syn.tif', rgb_syn)
+        imsave(path+'specular.tif', rgb_specular)
         #save("syn", ".png", syn)
 
     # python binary_reconstruction.py [-V] [-format png] [-path ./input_image]
