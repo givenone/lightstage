@@ -77,13 +77,13 @@ def calculateDiffuseAlbedo(mixed, specular) :
     out_img[...,0] = np.subtract(mixed[...,0], specular)
     out_img[...,1] = np.subtract(mixed[...,1], specular)
     out_img[...,2] = np.subtract(mixed[...,2], specular)
-    
+    out_img /= 2
     out_img = np.clip(out_img, 0, 255)
-    median = cv.medianBlur(out_img, 5) # each channel independently.
+    #median = cv.medianBlur(out_img, 5) # each channel independently.
     #blur = cv.bilateralFilter(out_img,9,75,75)
     print("Diffuse Albedo Done")
 
-    return median #out_img # BGR
+    return out_img # BGR
 
 
 """ 
@@ -147,17 +147,17 @@ def calculateSpecularAlbedo(images, imgs) :
 
     
     # using normailzed max values as the specular
-    specular_max = np.amax(specular_albedo, axis=0)
+    specular_max = np.median(specular_albedo, axis=0)
     min_val = np.min(specular_max)
     max_val = np.max(specular_max)
 
-    specular_max = (specular_max - min_val) / (max_val - min_val) * 128.0 # 255 is too bright
-    specular_max = np.clip(specular_max, 0, 255)
+    specular_max = (specular_max - min_val) / (max_val - min_val) * 255.0 # 255 is too bright
+    #specular_max = np.clip(specular_max, 0, 255)
     print("Specular Albedo Done")  
     
     plt.title("specular_albedo")
-    median = cv.medianBlur(specular_max, 5) # each channel independently.
-    return median
+    #median = cv.bilateralFilter(specular_max,9,75,75) # each channel independently.
+    return specular_max
 
 """
 The binary spherical gradients and their complements can be directly 
@@ -287,6 +287,9 @@ def HPF(normal) : # High Pass Filtering for specular normal reconstruction
     blur[..., 2] = gaussian_filter(normal[..., 2], sigma=7)
     filtered_normal = cv.subtract(normal, blur)
 
+    for h in range(filtered_normal.shape[0]) :
+        normalize(filtered_normal[h], copy = False)
+
     print("High Pass Filter Done")
 
     return filtered_normal
@@ -294,14 +297,14 @@ def HPF(normal) : # High Pass Filtering for specular normal reconstruction
 
 def synthesize(diffuse_normal, filtered_normal) :
 
-    syn = np.add(diffuse_normal, filtered_normal)
+    syn = np.add(diffuse_normal, 0.3 * filtered_normal)
 
     height, width, _ = syn.shape
 
     for h in range(height):
         normalize(syn[h], copy=False)
     
-    print("Specular Normal Synthesis done")
+    print("Specular Normal Synthesis Done")
 
     return syn
 
@@ -369,7 +372,7 @@ if __name__ == "__main__":
     config = config['MAIN']
     focal_length = float(config['focal_length'])
     
-    # sensor = (float(config['sensor_width']), float(config['sensor_height'])) 
+    #ssensor = (float(config['sensor_width']), float(config['sensor_height'])) 
     sensor = (float(config['sensor_height']), float(config['sensor_width'])) # Capture image is rotated.
     
     names = ["x", "x_c", "y", "y_c", "z", "z_c"]
@@ -425,8 +428,6 @@ if __name__ == "__main__":
         plt.title("specular_normal")
         plot(specular_normal)
         
-        for h in range(filtered_normal.shape[0]) :
-            normalize(filtered_normal[h], copy = False)
         plt.title("filtered_normal")
         plot(filtered_normal)
         
@@ -443,8 +444,8 @@ if __name__ == "__main__":
             #print(dirname)
             os.makedirs(dirname)
 
-        diffuse = cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB)
-        im = Image.fromarray(diffuse)
+        #diffuse = cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB)
+        im = Image.fromarray(diffuse_albedo[...,0].astype('uint8'))
         im.save(path+"result/diffuse_albedo.png")
         im = Image.fromarray(specular_albedo.astype('uint8'))
         im.save(path+"result/specular_albedo.png")
