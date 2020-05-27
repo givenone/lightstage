@@ -430,15 +430,15 @@ if __name__ == "__main__":
 
         diffuse = cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB)
         im = Image.fromarray(diffuse)
-        im.save("reconstruction_output/diffuse_albedo" + ".png")
-        save("reconstruction_output/diffuse_normal", ".png", diffuse_normal)
-        save("reconstruction_output/filtered", ".png", filtered_normal)
-        save("reconstruction_output/specular_normal", ".png", specular_normal)
-        save("reconstruction_output/syn", ".png", syn)
+        im.save(path+"diffuse_albedo" + ".png")
+        save(path+"diffuse_normal", ".png", diffuse_normal)
+        save(path+"filtered", ".png", filtered_normal)
+        save(path+"specular_normal", ".png", specular_normal)
+        save(path+"syn", ".png", syn)
         
         from tifffile import imsave
         rgb_syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
-        imsave('reconstruction_output/syn.tif', rgb_syn)
+        imsave(path+'syn.tif', rgb_syn)
         #save("syn", ".png", syn)
 
     # python binary_reconstruction.py [-V] [-format png] [-path ./input_image]
