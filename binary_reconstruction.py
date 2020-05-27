@@ -371,6 +371,8 @@ if __name__ == "__main__":
     imgs = []
     for name in names :
         img = cv.imread(name, 3) #BGR
+        img = cv.transpose(img) # transpose to change width and height. Captured image is rotated.
+        img = cv.flip(img, 1)
         imgs.append(img)
         arr = array(img).astype('float32')
         images.append(arr)
