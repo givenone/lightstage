@@ -1,0 +1,8 @@
+[System]
+Port=4
+CaptureDelay=50
+ShutterExposure=48000
+Gain=10
+Blueness=2.0
+Redness=2.0
+StartTimer=3000

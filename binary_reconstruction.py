@@ -79,11 +79,12 @@ def calculateDiffuseAlbedo(mixed, specular) :
     out_img[...,2] = np.subtract(mixed[...,2], specular)
     out_img /= 2
     out_img = np.clip(out_img, 0, 255)
-    median = cv.medianBlur(out_img, 5) # each channel independently.
+    #median = cv.medianBlur(out_img, 5) # each channel independently.
+    out_img = cv.GaussianBlur(out_img, (21, 21), cv.BORDER_DEFAULT)
     #blur = cv.bilateralFilter(out_img,9,75,75)
     print("Diffuse Albedo Done")
 
-    return median# BGR
+    return out_img# BGR
 
 
 """ 
@@ -156,9 +157,11 @@ def calculateSpecularAlbedo(images, imgs) :
     print("Specular Albedo Done")  
     
     plt.title("specular_albedo")
-    median = cv.medianBlur(specular_max, 5)
+    #median = cv.medianBlur(specular_max, 5)
+
+    specular_max = cv.GaussianBlur(specular_max, (21, 21), cv.BORDER_DEFAULT)
     #median = cv.bilateralFilter(specular_max,9,75,75) # each channel independently.
-    return median
+    return specular_max
 
 """
 The binary spherical gradients and their complements can be directly 
@@ -227,8 +230,8 @@ def calculateDiffuseNormals(images):
     N = []
 
     for i in range(3) :
-        I_suv_g = I.dot(images[2*i].reshape([-1,3]).transpose()).transpose().reshape(height,width,3)
-        I_suv_c = I.dot(images[2*i+1].reshape([-1,3]).transpose()).transpose().reshape(height,width,3)
+        I_suv_g = np.dot(images[2*i], I.T) 
+        I_suv_c = np.dot(images[2*i+1], I.T)
         G=np.sqrt(I_suv_g[:,:,1]**2 + I_suv_g[:,:,2]**2)
         G_C=np.sqrt(I_suv_c[:,:,1]**2 + I_suv_c[:,:,2]**2)
         N.append(G-G_C)
@@ -263,8 +266,11 @@ def calculateSpecularNormals(diffuse_albedo, specular_albedo, mixed_normal, diff
     alphadiffuse[..., 1] = d_y
     alphadiffuse[..., 2] = d_z
 
+    # testing...
     Reflection = np.subtract(mixed_normal, alphadiffuse)
-
+    #np.mean(specular_albedo
+    #Reflection = np.subtract(mixed_normal, 0.1 * diffuse_normal)
+    # testing done ...
     height, width, _ = Reflection.shape
     for h in range(height):
         normalize(Reflection[h], copy=False) # Normalize Reflection
@@ -282,10 +288,12 @@ def HPF(normal) : # High Pass Filtering for specular normal reconstruction
     
     height, width, _ = normal.shape
     
-    blur = np.zeros_like(normal)
-    blur[..., 0] = gaussian_filter(normal[..., 0], sigma=55)
-    blur[..., 1] = gaussian_filter(normal[..., 1], sigma=55)
-    blur[..., 2] = gaussian_filter(normal[..., 2], sigma=55)
+    #blur = gaussian_filter(normal, sigma = 101)
+
+    blur = np.empty_like(normal)
+    blur[..., 0] = gaussian_filter(normal[..., 0], sigma=101)
+    blur[..., 1] = gaussian_filter(normal[..., 1], sigma=101)
+    blur[..., 2] = gaussian_filter(normal[..., 2], sigma=101)
     filtered_normal = cv.subtract(normal, blur)
 
     for h in range(filtered_normal.shape[0]) :
@@ -389,23 +397,28 @@ if __name__ == "__main__":
         arr = array(img).astype('float32')
         images.append(arr)
 
-    vd = generate_viewing_direction(images[0].shape, focalLength = focal_length, sensor = sensor)
+    #vd = generate_viewing_direction(images[0].shape, focalLength = focal_length, sensor = sensor)
     
     #vd = pointcloud.generate_viewing_direction(images[0].shape, focalLength = 0.012, sensor = (0.0689, 0.0492))
     
-    specular_albedo = calculateSpecularAlbedo(images, imgs)
-    mixed_albedo = calculateMixedAlbedo(images)
-    diffuse_albedo = calculateDiffuseAlbedo(mixed_albedo, specular_albedo)
+    #specular_albedo = calculateSpecularAlbedo(images, imgs)
+    #mixed_albedo = calculateMixedAlbedo(images)
+    #diffuse_albedo = calculateDiffuseAlbedo(mixed_albedo, specular_albedo)
     mixed_normal = calculateMixedNormals(images)
     diffuse_normal = calculateDiffuseNormals(images)
-    specular_normal = calculateSpecularNormals(diffuse_albedo, specular_albedo, mixed_normal, diffuse_normal, vd)
-    filtered_normal = HPF(specular_normal)
+    #specular_normal = calculateSpecularNormals(diffuse_albedo, specular_albedo, mixed_normal, diffuse_normal, vd)
+    #filtered_normal = HPF(specular_normal)
+    #testing...
+    filtered_normal = HPF(mixed_normal)
     syn = synthesize(diffuse_normal, filtered_normal)
+    #testing done.
+    
+    #syn = synthesize(diffuse_normal, filtered_normal)
 
     view_flag = args.visualizing
     
     if view_flag :
-        
+        """        
         plt.title("mixed_albedo")
         rgb_img = cv.cvtColor((mixed_albedo/2).astype('uint8'), cv.COLOR_BGR2RGB)
         plt.imshow(rgb_img)
@@ -422,19 +435,19 @@ if __name__ == "__main__":
 
         plt.title("mixed_normal")
         plot(mixed_normal)
-        
+        """    
         plt.title("diffuse normal")
         plot(diffuse_normal)
-        
+        """    
         plt.title("specular_normal")
         plot(specular_normal)
-        
+        """
         plt.title("filtered_normal")
         plot(filtered_normal)
-        
+        """
         plt.title("Synthesized")
         plot(syn)
-
+        """
     save_flag = True
 
     if save_flag :
@@ -446,19 +459,25 @@ if __name__ == "__main__":
             os.makedirs(dirname)
 
         #diffuse = cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB)
-        im = Image.fromarray(diffuse_albedo[...,0].astype('uint8'))
-        im.save(path+"result/diffuse_albedo.png")
-        im = Image.fromarray(specular_albedo.astype('uint8'))
-        im.save(path+"result/specular_albedo.png")
-        save(path+"result/mixed_normal", ".png", mixed_normal)
-        save(path+"result/diffuse_normal", ".png", diffuse_normal)
-        save(path+"result/filtered", ".png", filtered_normal)
-        save(path+"result/specular_normal", ".png", specular_normal)
-        save(path+"result/syn", ".png", syn)
+        #im = Image.fromarray(diffuse_albedo.astype('uint8'))
+        #im.save(path+"result/diffuse_albedo.png")
+        #im = Image.fromarray(specular_albedo.astype('uint8'))
+        #im.save(path+"result/specular_albedo.png")
+        #save(path+"result/mixed_normal", ".png", mixed_normal)
+        #save(path+"result/diffuse_normal", ".png", diffuse_normal)
+        #save(path+"result/filtered", ".png", filtered_normal)
+        #save(path+"result/specular_normal", ".png", specular_normal)
+        #save(path+"result/syn", ".png", syn)
+
+        #testing...
+        save(path+"result/syn_mixed", ".png", syn)
+        #save(path+"result/filtered_mixed", ".png", test)
+        #save(path+"result/filtered_diffuse", ".png", d_test)
+        #testing done...
         
-        from tifffile import imsave
-        rgb_syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
-        rgb_specular = cv.cvtColor(specular_normal, cv.COLOR_BGR2RGB)
+        #from tifffile import imsave
+        #rgb_syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
+        #rgb_specular = cv.cvtColor(specular_normal, cv.COLOR_BGR2RGB)
         #imsave(path+'syn.tif', rgb_syn)
         #imsave(path+'specular.tif', rgb_specular)
         #save("syn", ".png", syn)
