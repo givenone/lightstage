@@ -373,17 +373,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     path = args.path
-    form = "." + args.form
-    #conf_path = os.path.abspath(os.path.dirname(__file__))
-    #conf_path = os.path.join(conf_path, "recon.conf")
-    config = configparser.ConfigParser()
-    config.read('./recon.conf')
-    config = config['MAIN']
-    focal_length = float(config['focal_length'])
-    
-    #ssensor = (float(config['sensor_width']), float(config['sensor_height'])) 
-    sensor = (float(config['sensor_height']), float(config['sensor_width'])) # Capture image is rotated.
-    
+    form = "." + args.form  
     names = ["x", "x_c", "y", "y_c", "z", "z_c"]
     names = [path + name + form for name in names]
     
@@ -397,23 +387,10 @@ if __name__ == "__main__":
         arr = array(img).astype('float32')
         images.append(arr)
 
-    #vd = generate_viewing_direction(images[0].shape, focalLength = focal_length, sensor = sensor)
-    
-    #vd = pointcloud.generate_viewing_direction(images[0].shape, focalLength = 0.012, sensor = (0.0689, 0.0492))
-    
-    #specular_albedo = calculateSpecularAlbedo(images, imgs)
-    #mixed_albedo = calculateMixedAlbedo(images)
-    #diffuse_albedo = calculateDiffuseAlbedo(mixed_albedo, specular_albedo)
     mixed_normal = calculateMixedNormals(images)
     diffuse_normal = calculateDiffuseNormals(images)
-    #specular_normal = calculateSpecularNormals(diffuse_albedo, specular_albedo, mixed_normal, diffuse_normal, vd)
-    #filtered_normal = HPF(specular_normal)
-    #testing...
     filtered_normal = HPF(mixed_normal)
     syn = synthesize(diffuse_normal, filtered_normal)
-    #testing done.
-    
-    #syn = synthesize(diffuse_normal, filtered_normal)
 
     view_flag = args.visualizing
     
@@ -457,29 +434,8 @@ if __name__ == "__main__":
         if not os.path.exists(dirname):
             #print(dirname)
             os.makedirs(dirname)
-
-        #diffuse = cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB)
-        #im = Image.fromarray(diffuse_albedo.astype('uint8'))
-        #im.save(path+"result/diffuse_albedo.png")
-        #im = Image.fromarray(specular_albedo.astype('uint8'))
-        #im.save(path+"result/specular_albedo.png")
-        #save(path+"result/mixed_normal", ".png", mixed_normal)
-        #save(path+"result/diffuse_normal", ".png", diffuse_normal)
-        #save(path+"result/filtered", ".png", filtered_normal)
-        #save(path+"result/specular_normal", ".png", specular_normal)
-        #save(path+"result/syn", ".png", syn)
-
         #testing...
         save(path+"result/syn_mixed", ".png", syn)
-        #save(path+"result/filtered_mixed", ".png", test)
-        #save(path+"result/filtered_diffuse", ".png", d_test)
-        #testing done...
-        
-        #from tifffile import imsave
-        #rgb_syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
-        #rgb_specular = cv.cvtColor(specular_normal, cv.COLOR_BGR2RGB)
-        #imsave(path+'syn.tif', rgb_syn)
-        #imsave(path+'specular.tif', rgb_specular)
-        #save("syn", ".png", syn)
+
 
     # python binary_reconstruction.py [-V] [-format png] [-path ./input_image]
