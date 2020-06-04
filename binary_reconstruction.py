@@ -8,7 +8,7 @@ import math
 import sys,os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from scipy.spatial.transform import Rotation as Rot
-
+import concurrent.futures
 
 """
 plot resulting image using matplotlib.pyplot
@@ -49,6 +49,35 @@ def save(path, form, image) :
         im.save(path+form)
     else :
         im.save(path+form)
+
+"""
+save resulting normal map as binary
+"""
+def save_bin(path, form, image) :
+
+    height, width, _ = image.shape
+    header = '''normal
+    format binary_little_endian 1.0
+    num_cols %d
+    num_rows %d
+    property float nx
+    property float ny
+    property float nz
+    end_header'''%(width, height)
+
+    file = open(path+form,"wb")
+    file.write(header.encode('ascii'))
+    file.write(b'\n')
+    
+    for h in range(height) :
+        for w in range(width) :
+            file.write(np.dtype('<f4').type(image[h][w][0]))
+            file.write(np.dtype('<f4').type(image[h][w][1]))
+            file.write(np.dtype('<f4').type(image[h][w][2]))
+
+    print("write ply done")
+    file.close()
+
 
 """
 mixed albedo calculation.
@@ -347,6 +376,61 @@ def generate_viewing_direction(shape, focalLength, sensor = (0.036, 0.024)) :
     print("Viewing Direction Done")
     return vd
 
+def execute(item) :
+    
+    directory, path, form = item
+    path = path + directory + "/"
+    names = ["x", "x_c", "y", "y_c", "z", "z_c"]
+    names = [path + name + form for name in names]
+    
+    images = []
+    imgs = []
+    for name in names :
+        img = cv.imread(name, 3) #BGR
+        img = cv.transpose(img) # transpose to change width and height. Captured image is rotated.
+        img = cv.flip(img, 1)
+        """
+        TODO ::
+
+        align input images with scanner imagees
+
+        """
+        imgs.append(img)
+        arr = array(img).astype('float32')
+        images.append(arr)
+
+    mixed_normal = calculateMixedNormals(images)
+    diffuse_normal = calculateDiffuseNormals(images)
+    filtered_normal = HPF(mixed_normal)
+    syn = synthesize(diffuse_normal, filtered_normal)
+    
+    view_flag = False
+
+    if view_flag :
+        plt.title("diffuse normal")
+        plot(diffuse_normal)
+
+        plt.title("Synthesized")
+        plot(syn)
+
+    save_flag = True
+
+    if save_flag :
+        
+        dirname = os.path.join(os.path.abspath(os.path.dirname(__file__)) + "/" + path, 'result')
+        #print(dirname)
+        if not os.path.exists(dirname):
+            #print(dirname)
+            os.makedirs(dirname)
+        #testing...
+
+        from tifffile import imsave
+        imsave(path+'syn.tif', syn)
+        #save_bin(path+"result/syn_mixed", ".png", syn)
+        #np.save('test.npy', syn)
+
+    # python binary_reconstruction.py [-V] [-format png] [-path ./input_image]
+
 
 if __name__ == "__main__":
     import argparse, configparser
@@ -373,69 +457,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     path = args.path
-    form = "." + args.form  
-    names = ["x", "x_c", "y", "y_c", "z", "z_c"]
-    names = [path + name + form for name in names]
+    form = "." + args.form
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+            executor.map(execute, [("Front", path, form), ("Left", path, form), ("Right", path, form)])
     
-    images = []
-    imgs = []
-    for name in names :
-        img = cv.imread(name, 3) #BGR
-        img = cv.transpose(img) # transpose to change width and height. Captured image is rotated.
-        img = cv.flip(img, 1)
-        imgs.append(img)
-        arr = array(img).astype('float32')
-        images.append(arr)
-
-    mixed_normal = calculateMixedNormals(images)
-    diffuse_normal = calculateDiffuseNormals(images)
-    filtered_normal = HPF(mixed_normal)
-    syn = synthesize(diffuse_normal, filtered_normal)
-
-    view_flag = args.visualizing
-    
-    if view_flag :
-        """        
-        plt.title("mixed_albedo")
-        rgb_img = cv.cvtColor((mixed_albedo/2).astype('uint8'), cv.COLOR_BGR2RGB)
-        plt.imshow(rgb_img)
-        plt.show()
-
-        plt.title("diffuse_albedo")
-        plt.imshow(cv.cvtColor((diffuse_albedo).astype('uint8'), cv.COLOR_BGR2RGB))
-        plt.show()
-
-        plt.title("specular_albedo")
-        im = Image.fromarray(specular_albedo.astype('uint8'), 'L')
-        plt.imshow(im, cmap='gray', vmin=0, vmax=255)
-        plt.show()
-
-        plt.title("mixed_normal")
-        plot(mixed_normal)
-        """    
-        plt.title("diffuse normal")
-        plot(diffuse_normal)
-        """    
-        plt.title("specular_normal")
-        plot(specular_normal)
-        """
-        plt.title("filtered_normal")
-        plot(filtered_normal)
-        """
-        plt.title("Synthesized")
-        plot(syn)
-        """
-    save_flag = True
-
-    if save_flag :
-        
-        dirname = os.path.join(os.path.abspath(os.path.dirname(__file__)) + "/" + path, 'result')
-        #print(dirname)
-        if not os.path.exists(dirname):
-            #print(dirname)
-            os.makedirs(dirname)
-        #testing...
-        save(path+"result/syn_mixed", ".png", syn)
-
-
-    # python binary_reconstruction.py [-V] [-format png] [-path ./input_image]
+ 
