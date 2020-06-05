@@ -425,7 +425,8 @@ def execute(item) :
         #testing...
 
         from tifffile import imsave
-        imsave(path+'syn.tif', syn)
+        print(syn[2000][1000], path)
+        imsave(path+'result/normal.tif', syn)
         #save_bin(path+"result/syn_mixed", ".png", syn)
         #np.save('test.npy', syn)
 
