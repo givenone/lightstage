@@ -426,6 +426,7 @@ def execute(item) :
 
         from tifffile import imsave
         print(syn[2000][1000], path)
+        syn = cv.cvtColor(syn, cv.COLOR_BGR2RGB)
         imsave(path+'result/normal.tif', syn)
         #save_bin(path+"result/syn_mixed", ".png", syn)
         #np.save('test.npy', syn)
@@ -462,5 +463,6 @@ if __name__ == "__main__":
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
             executor.map(execute, [("Front", path, form), ("Left", path, form), ("Right", path, form)])
+    print("normal reconstruction done")
     
  
