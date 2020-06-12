@@ -1,0 +1,11 @@
+futures==3.1.1
+matplotlib==3.2.1
+numpy==1.18.2
+opencv-contrib-python==4.2.0.34
+opencv-python==4.2.0.34
+Pillow==6.2.1
+Pygments==2.6.1
+scikit-image==0.17.2
+scipy==1.4.1
+sklearn==0.0
+tifffile==2020.2.16
